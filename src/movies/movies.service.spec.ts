@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service';
 
@@ -16,7 +17,92 @@ describe('MoviesService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should be 4', () => {
-    expect(2 + 2).toEqual(4);
+  describe('getAll', () => {
+    it('should return an array', () => {
+      const result = service.getAll();
+      expect(result).toBeInstanceOf(Array);
+    });
+  });
+
+  describe('getOne', () => {
+    it('should return a movie', () => {
+      service.create({
+        title: 'test movie',
+        year: 2000,
+        genres: ['test'],
+      });
+      const movie = service.getOne(1);
+      expect(movie).toBeDefined();
+      expect(movie.id).toEqual(1);
+      expect(movie.title).toEqual('test movie');
+    });
+
+    it('should throw 404 error', () => {
+      try {
+        service.getOne(999);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e.message).toEqual('해당 영화 999번을 찾을 수 없습니다.');
+      }
+    });
+  });
+
+  describe('deleteOne', () => {
+    it('deletes a movie', () => {
+      service.create({
+        title: 'test movie',
+        year: 2000,
+        genres: ['test'],
+      });
+      const beforeDelete = service.getAll().length;
+      service.deleteOne(1);
+      const afterDelete = service.getAll().length;
+      expect(afterDelete).toBeLessThan(beforeDelete);
+    });
+
+    it('should return a 404', () => {
+      try {
+        service.deleteOne(999);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e.message).toEqual('해당 영화 999번을 찾을 수 없습니다.');
+      }
+    });
+  });
+
+  describe('create', () => {
+    it('should create a movie', () => {
+      const beforeCreate = service.getAll().length;
+      service.create({
+        title: 'test movie',
+        year: 2000,
+        genres: ['test'],
+      });
+      const afterCraete = service.getAll().length;
+      expect(afterCraete).toBeGreaterThan(beforeCreate);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a movie', () => {
+      service.create({
+        title: 'test movie',
+        year: 2000,
+        genres: ['test'],
+      });
+      service.update(1, {
+        title: 'update movie',
+      });
+      const movie = service.getOne(1);
+      expect(movie.title).toEqual('update movie');
+    });
+    it('should throw a NotFoundException', () => {
+      try {
+        service.update(999, { title: 'no data' });
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e.message).toEqual('해당 영화 999번을 찾을 수 없습니다.');
+      }
+    });
   });
 });
